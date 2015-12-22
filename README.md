@@ -18,6 +18,8 @@ Service monitoring and flag redemption service. Developed to closely match Defco
 
 ## Installing
 
+    git clone https://github.com/ShySec/scrimmage-scoreboard /home/ctf/scoreboard
+    cd /home/ctf/scoreboard
     ./deploy <hostname>
 
 ## Running (via Rocket)
@@ -25,9 +27,9 @@ Service monitoring and flag redemption service. Developed to closely match Defco
     cd web2py
     python web2py.py -i 0.0.0.0 -p 8080 --nogui -c config/ssl/scoreboard.server.crt -k config/ssl/scoreboard.server.key --ca-cert config/ssl/scoreboard.ca.crt
 
-## Connecting [gameboxes](https://github.com/ShySec/scrimmage-dc22-gamebox)
+## Connecting gameboxes
 
-1. Copy `web2py/config/ssl/scrimmage_key.pub` to gamebox: `/root/.ssh/authorized_keys`
+1. Copy `web2py/config/ssl/scrimmage_key.pub` to gamebox: `/home/ctf/.ssh/authorized_keys`
 1. Register new team through signup dialog
 1. Register server as admin
 1. Assign server to new team

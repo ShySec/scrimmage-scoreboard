@@ -1,5 +1,4 @@
 #!/bin/env python
-# crontab ~/scoreboard/settings/ctf_crontab
 # python web2py.py -M -S scoreboard -R applications/scoreboard/scripts/scorer.py -A DEBUG
 import os
 import sys
