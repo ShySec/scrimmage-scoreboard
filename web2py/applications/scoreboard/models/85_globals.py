@@ -1,0 +1,1 @@
+assignWeb2pyGlobals()

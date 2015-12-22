@@ -1,0 +1,3 @@
+# ignore everything except the .gitignore, this is used to maintain the folder structure
+*
+!.gitignore

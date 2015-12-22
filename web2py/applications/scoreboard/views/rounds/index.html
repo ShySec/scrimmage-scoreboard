@@ -1,0 +1,9 @@
+{{extend 'layout_score.html'}}
+
+{{if web2py.isGameStarted():}}
+<div class="grid">{{=form}}</div>
+{{else:}}
+<div style="width:100%; text-align: center; margin-top: 60px;">
+	<h3>Game starts at {{=web2py.date_to_string(web2py.gameStartsAt())}}</h3>
+</div>
+{{pass}}

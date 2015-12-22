@@ -1,0 +1,32 @@
+#!/usr/bin/env python2
+import os
+import re
+import sys
+import logging
+from pwn import *
+
+def put_public_key(server, user, public_key, keyfile, sshuser='root'):
+	logger.info('installing certificate for %s@%s',user,server)
+	try:
+		client = ssh(sshuser,server,22,keyfile=keyfile)
+	except:
+		logger.exception('failed to access %s',server)
+		return False
+	client.shell('mkdir /home/%s/.ssh/'%(user))
+	client.shell('echo "%s" > /home/%s/.ssh/authorized_keys'%(public_key,user))
+	client.shell('chown -R %s:%s /home/%s/.ssh'%(user,user,user))
+	client.shell('passwd -ud %s'%(user))
+	logger.debug('certificate successfully installed')
+	client.close()
+	return True
+
+if __name__ == '__main__':
+	if len(sys.argv)!=5:
+		print 'usage: %s <user> <server> <team> <public-key>'%sys.argv[0]
+		sys.exit(1)
+	logger = logging.getLogger()
+	logformat = "%(asctime)s %(process)05d:%(levelname)5s %(funcName)s():%(lineno)d %(message)s"
+	logging.basicConfig(level=logging.DEBUG,filename='logs/transfer_public_key.log',format=logformat)
+
+	user,server,team,pubkey = sys.argv[1:]
+	put_public_key(server,user,'%s %s'%(pubkey,team),'web2py/config/ssl/scrimmage_key')

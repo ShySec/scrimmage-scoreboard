@@ -1,0 +1,57 @@
+{{extend 'layout_score.html'}}
+
+<style>
+div.grid
+{
+	max-width: 820px;
+}
+h3
+{
+	margin: 34px 0 4px -1px;
+	font-weight: bold;
+	font-size: 30px;
+}
+p
+{
+	font-size: 16px;
+}
+</style>
+
+<div class="grid">
+	<h3>Client Certificates</h3>
+	<p>Users generate individual client certificates for submission. Generate your certificate <a href="{{=URL('teams','generate_certificate')}}">here</a></p>
+	<h3>Certificate Validation</h3>
+<pre>
+# client.pem downloaded from {{=URL('teams','generate_certificate',scheme='https')}}
+$ curl -k -E client.pem '{{=URL('flags','validate',scheme='https')}}'
+=> certificate validated
+
+$ curl -k -E client.pem -d @/home/$service/flag '{{=URL('flags','validate',scheme='https')}}'
+=> 40-byte upload validated
+</pre>
+	<h3>Data API</h3>
+	<p>A limited data API is provided to access the latest information.</p>
+	<h3>API Examples</h3>
+<pre>
+# client.pem downloaded from {{=URL('teams','generate_certificate',scheme='https')}}
+$ curl -k -E client.pem '{{=URL('api','teams',scheme='https')}}'
+=> [{"name":"samurai", "host": "127.0.0.1"}]
+
+$ curl -k -E client.pem '{{=URL('api','services',scheme='https')}}'
+=> [{"name": "eliza", "port":10001}]
+
+$ curl -k -E client.pem '{{=URL('api','game_round',scheme='https')}}'
+=> {"number": "1", "teams": "1", "services": "8", "starts_at": "2015-01-01 01:02:03", "expires_at": "2015-01-01 02:03:04"}
+
+$ curl -k -E client.pem '{{=URL('api','game_round',vars=dict(game_round=1),scheme='https')}}'
+=> [{"name": "eliza", "port":10001}]
+</pre>
+	<h3>Service Flags</h3>
+	<p>Flags for each service are stored at /home/$SERVICE/flag. Flags are captured after submission to the scoring server with your client certificate.</p>
+	<h3>Flag Submission</h3>
+<pre>
+# client.pem downloaded from {{=URL('teams','generate_certificate',scheme='https')}}
+$ curl -k -E client.pem -d @/home/bash/flag '{{=URL('flags','capture',scheme='https')}}'
+=> success
+</pre>
+</div>

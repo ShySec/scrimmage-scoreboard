@@ -1,0 +1,46 @@
+#!/bin/bash
+set -e -u
+
+if [ ${#@} -lt 2 ]; then
+  echo "usage: $0 <team> <user>"
+  exit 0
+fi
+
+TEAM=$1
+USER=$2
+
+if [[ "$TEAM" =~ [^a-zA-Z0-9_@.+-] ]]; then
+  echo "team names must be alphanumeric"
+  exit 1
+fi
+if [[ "$USER" =~ [^a-zA-Z0-9_@.+-] ]]; then
+  echo "user names must be alphanumeric"
+  exit 1
+fi
+
+CERTPATH=web2py/config/ssl
+CLIENTPATH=$(mktemp -d)
+CSRFILE="$CLIENTPATH/client.csr"
+CRTFILE="$CLIENTPATH/client.crt"
+KEYFILE="$CLIENTPATH/client.key"
+
+set +e
+chmod 0700 "$CLIENTPATH"
+>&2 echo openssl req -sha256 -nodes -newkey rsa:2048 -days 90 -keyout $KEYFILE -out $CSRFILE -subj "/OU=$TEAM/CN=$USER"
+ERR=$(openssl req -nodes -newkey rsa:2048 -days 90 -keyout $KEYFILE -out $CSRFILE -subj "/OU=$TEAM/CN=$USER" 2>&1)
+if [ $? -ne 0 ]; then
+  rm -rf "$CLIENTPATH"
+  echo "$ERR"
+  exit 2
+fi
+>&2 echo openssl x509 -req -days 90 -in $CSRFILE -CA "$CERTPATH/scoreboard.ca.crt" -CAkey "$CERTPATH/scoreboard.ca.key" -CAserial "$CERTPATH/scoreboard.ca.srl" -out $CRTFILE
+ERR=$(openssl x509 -req -days 90 -in $CSRFILE -CA "$CERTPATH/scoreboard.ca.crt" -CAkey "$CERTPATH/scoreboard.ca.key" -CAserial "$CERTPATH/scoreboard.ca.srl" -out $CRTFILE 2>&1)
+if [ $? -ne 0 ]; then
+  rm -rf "$CLIENTPATH"
+  echo "$ERR"
+  exit 3
+fi
+set -e
+PEM=$(cat $KEYFILE $CRTFILE)
+rm -rf "$CLIENTPATH"
+echo "$PEM"

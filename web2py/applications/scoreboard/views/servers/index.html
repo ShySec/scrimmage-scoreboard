@@ -1,0 +1,74 @@
+{{extend 'layout_score.html'}}
+
+<style>
+div.grid h3 {
+	font-weight: bold;
+	margin-top: 40px;
+}
+.btn {
+	text-shadow: none;
+}
+input[type="text"] {
+	height: 36px;
+	padding-left: 4px;
+	width: 300px;
+}
+</style>
+<script>
+function refresh(use_cache) {
+	document.location.reload(use_cache);
+}
+function click_refresh(url) {
+	$.post(url, function() { refresh(false); });
+}
+function assign_team(btn, url) {
+	gbtn=btn;
+	team = $(btn).parents('tr').find('select').val();
+	if(!team) return;
+	click_refresh(url+'&team='+team);
+}
+</script>
+<div class="grid">
+{{
+java_post = lambda url:'javascript:click_refresh("%s")'%url
+team_post = lambda url:'javascript:assign_team(this,"%s")'%url
+
+
+grid_kwargs=dict(csv=False, create=False, deletable=False, editable=False, searchable=False, details=False)
+btn_enable = lambda server:BUTTON('Enable',_class='btn-success',_onclick=java_post(idURL(server.id,'servers','enable')))
+btn_disable = lambda server:BUTTON('Disable',_class='btn-danger',_onclick=java_post(idURL(server.id,'servers','disable')))
+btn_unassign = lambda server:BUTTON('Unassign',_class='btn-warning',_onclick=java_post(idURL(server.id,'servers','unassign')))
+btn_assign = lambda server:BUTTON('Assign',_class='btn-success',_onclick=team_post(idURL(server.id,'servers','assign')))
+btn_delete = lambda server:BUTTON('Delete',_class='btn-danger',_onclick=java_post(idURL(server.id,'servers','delete')))
+
+disabled_btns = lambda server:TD([f(server) for f in [btn_enable,btn_delete]])
+assigned_btns = lambda server:TD([f(server) for f in [btn_unassign]])
+unassigned_btns = lambda server:TD([f(server) for f in [btn_assign,btn_disable]])
+
+team_options = SELECT(['']+[OPTION(team.name,_value=team.id) for team in teams])
+
+def render_server(server):
+	if server.status == 'disabled': return render_disabled_server(server)
+	if server.assigned: return render_assigned_server(server)
+	return render_unassigned_server(server)
+
+def render_disabled_server(server):
+	return TR(server.status,'-',server.address,disabled_btns(server))
+
+def render_assigned_server(server):
+	return TR(server.status,server.assigned.name,server.address,assigned_btns(server))
+
+def render_unassigned_server(server):
+	return TR(server.status,team_options,server.address,unassigned_btns(server))
+}}
+
+<div class="category">
+	<h3>Servers</h3>
+	<table class="table table-hover table-condensed">
+		<tr><th>Status</th><th>Team</th><th>Address</th><th></th></tr>
+		{{for server in db(db.team_server_pool).select(orderby=db.team_server_pool.id):}}
+			{{=render_server(server)}}
+		{{pass}}
+	</table>
+</div>
+{{=form}}

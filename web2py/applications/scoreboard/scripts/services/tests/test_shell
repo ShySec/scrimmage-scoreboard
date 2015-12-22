@@ -1,0 +1,21 @@
+#!/bin/bash
+set -e -u
+
+if [[ ${#@} < 2 ]]; then
+  echo "usage: $0 <host> <port> [<next_token> <prev_token>]"
+  exit 1
+fi
+
+if [[ ${#@} > 2 && ${#@} != 4 ]]; then
+  echo "usage: $0 <host> <port> <next_token> <prev_token>"
+  exit 1
+fi
+
+HOST=$1
+PORT=$2
+if [ ${#@} -eq 4 ]; then
+	NEXT_TOKEN=$3
+	PREV_TOKEN=$4
+fi
+
+set +e

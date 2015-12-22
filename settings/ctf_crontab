@@ -1,0 +1,9 @@
+# .---------------- minute (0 - 59)
+# |  .------------- hour (0 - 23)
+# |  |  .---------- day of month (1 - 31)
+# |  |  |  .------- month (1 - 12) OR jan,feb,mar,apr ...
+# |  |  |  |  .---- day of week (0 - 6) (Sunday=0 or 7)
+# |  |  |  |  |
+ */1 *  *  *  *  (cd /home/ctf/scoreboard/web2py && /usr/bin/python2 web2py.py -M -S scoreboard -R applications/scoreboard/scripts/poller.py) >> /home/ctf/scoreboard/site/private/cron.poller.log 2>&1
+ */1 *  *  *  *  (cd /home/ctf/scoreboard/web2py && /usr/bin/python2 web2py.py -M -S scoreboard -R applications/scoreboard/scripts/scorer.py) >> /home/ctf/scoreboard/site/private/cron.scorer.log 2>&1
+ */5 *  *  *  *  (cd /home/ctf/scoreboard/rotator && PWNLIB_NOTERM=1 /usr/bin/python2 rotator.py ../web2py/config/ssl/scrimmage_key) >> /home/ctf/scoreboard/rotator/logs/cron.log 2>&1

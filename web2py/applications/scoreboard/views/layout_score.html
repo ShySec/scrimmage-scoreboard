@@ -1,0 +1,39 @@
+{{extend 'layout.html'}}
+<style>
+div.grid
+{
+	max-width: 600px;
+	margin-left: auto;
+	margin-right: auto;
+	margin-top: 40px;
+}
+div.web2py_counter
+{
+	display:none;
+}
+button.btn
+{
+	padding: 2px 4px;
+}
+.btn-lg
+{
+	text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.25);
+}
+div.grid div.col-sm-9 {
+	padding-top: 7px;
+}
+div.game_status {
+	top: 0px;
+	left: 50%;
+	color: #555;
+	margin-top: 2px;
+	position: absolute;
+	margin-left: -320px;
+	text-align: center;
+	font-weight: bold;
+	font-size: 26px;
+	width: 640px;
+}
+</style>
+<div class="game_status">{{=getGameStatusMessage()}}</div>
+{{include}}

@@ -1,0 +1,65 @@
+#!/bin/bash
+set -e -u -x
+
+if [ ${#@} -lt 1 ]; then
+  echo "usage: $0 <hostname>"
+  exit
+fi
+
+HOSTNAME=$1
+ADDRESS=$(hostname -I | cut -f1 -d' ')
+
+if [ -f .deployed ]; then
+  echo "scoreboard already deployed; rm .deployed to force"
+  exit
+fi
+
+# setup web2py databases
+pushd web2py
+python web2py.py -M -S scoreboard -R applications/scoreboard/scripts/setup.py
+popd
+
+# setup SSL certificates
+mkdir -p web2py/config/ssl
+pushd "web2py/config/ssl"
+cat << EOF > openssl.cnf
+[req]
+req_extensions = v3_req
+distinguished_name = req_distinguished_name
+
+[req_distinguished_name]
+countryName = Country Name (2 letter code)
+countryName_default = US
+localityName = Locality Name (eg, city)
+organizationalUnitName = Organizational Unit Name (eg, section)
+commonName = Common Name (eg, YOUR name)
+commonName_max = 64
+emailAddress = Email Address
+
+[v3_req]
+subjectAltName = @alt_names
+
+[alt_names]
+IP.1  = $ADDRESS
+DNS.1 = $HOSTNAME
+EOF
+
+[ -f scrimmage_key ] || ssh-keygen -f scrimmage_key -N ''
+[ -f scoreboard.ca.srl ] ||  echo "01" > scoreboard.ca.srl # start a serial file for tracking client certificates
+[ -f scoreboard.server.dhparam ] || openssl dhparam -out scoreboard.server.dhparam 2048 # only generate dhparam on first run
+openssl req -x509 -sha256 -nodes -newkey rsa:4096 -days 90 -keyout scoreboard.ca.key -out scoreboard.ca.crt -subj "/OU=samurai/CN=$HOSTNAME"
+openssl req -nodes -sha256 -newkey rsa:2048 -days 90 -keyout scoreboard.server.key -out scoreboard.server.csr -reqexts v3_req -config openssl.cnf -subj "/OU=samurai/CN=$HOSTNAME"
+openssl x509 -req -days 90 -in scoreboard.server.csr -CA scoreboard.ca.crt -CAkey scoreboard.ca.key -CAserial scoreboard.ca.srl -out scoreboard.server.crt -extensions v3_req -extfile openssl.cnf
+chown ctf:ctf ./*; chmod 0400 ./*
+chmod 0444 scoreboard.*.crt
+chmod 0600 scoreboard.*.srl
+rm -f openssl.cnf
+popd # web2py/config/ssl
+
+# creates certificate for (inactive) samurai team
+./create_client_certificate samurai rotator > rotator/credentials.crt
+
+# sets up periodic tasks (polling/scoring)
+crontab settings/ctf_crontab
+
+touch .deployed

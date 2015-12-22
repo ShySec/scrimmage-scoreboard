@@ -1,0 +1,232 @@
+{{extend 'layout_score.html'}}
+
+<script src="/static/js/d3.min.js"></script>
+<style>
+.container {
+  width: 500px;
+  margin: 0 auto;
+  padding: 0;
+  padding-bottom: 1em;
+  text-align: center; }
+
+.lbscontainer {
+	background:rgb(37,23,74);
+	width: 100%;
+	height: 100%;
+}
+
+.lbscontainer span {
+	font-weight: 600;
+	font-size: 1.0em;
+	color: rgb(37,23,74);
+	text-align: center;
+	vertical-align: center;
+	display: block;
+	max-width: 98px;
+	max-height: 98px;
+	margin: 0 auto;
+	word-wrap: break-word;
+}
+
+.teamTable {
+	fill: #e291e8;
+	stroke: white;
+}
+g span {
+	padding: 10px 4px 0;
+}
+
+.pwnDot {
+	fill:rgb(255, 128, 0);
+}
+</style>
+<script>
+var webSock = new WebSocket("{{=URL('realtime','viz',scheme='ws',port=8888)}}");
+
+var map = {};
+map.width = 1152;
+map.height = 864;
+
+var svg = d3.select("body").append("svg");
+
+svg.attr("width", map.width).attr("height", map.height).attr("class", "lbscontainer");
+
+function lookupTeamGOT(teamname) {
+	var got = d3.selectAll("rect")
+		.filter(function(d) { return d.teamname === teamname; });
+	return got[0];
+}
+
+function lookupTeam(teamname) {
+	var got = d3.selectAll("rect")
+		.filter(function(d) { return d.teamname === teamname; });
+	return got.data()[0];
+}
+
+function lookupTeamObject(teamname) {
+	var got = d3.selectAll("foreignObject")
+		.filter(function(d) { return d.teamname === teamname; });
+	return got.data()[0];
+}
+
+function calcMidpoint(x1, y1, x2, y2)
+{
+	if(y2<y1 && x2<x1)
+	{
+		var tmpy = y2;
+		var tmpx = x2;
+		x2 = x1;
+		y2 = y1;
+		x1 = tmpx;
+		y1 = tmpy;
+	}
+	else if(y2<y1) {
+		y1 = y2 + (y2=y1, 0);
+	}
+	else if(x2<x1) {
+		x1 = x2 + (x2=x1, 0);
+	}
+
+	var radian = Math.atan(-((y2-y1)/(x2-x1)));
+	var r = Math.sqrt(x2-x1) + Math.sqrt(y2-y1);
+	var m1 = (x1+x2)/2;
+	var m2 = (y1+y2)/2;
+
+	var min = 0.5, max = 6.5;
+	var arcIntensity = parseFloat((Math.random() * (max - min) + min).toFixed(2));
+
+	var a = Math.floor(m1 + r * arcIntensity * Math.sin(radian));
+	var b = Math.floor(m2 + r * arcIntensity * Math.cos(radian));
+
+	return {"x":a, "y":b};
+}
+
+function translateAlong(path) {
+	var l = path.getTotalLength();
+	return function(i) {
+	  return function(t) {
+	    var p = path.getPointAtLength(t*l);
+	    return "translate(" + p.x + "," + p.y + ")";
+	  }
+	}
+}
+
+function handlePwn(msg) {
+	var from = lookupTeam(msg.from);
+	var to = lookupTeam(msg.to);
+	var serviceName = msg.service;
+	var serviceRGB = msg.servicergb;
+
+	var lineData = [{"x":from.x+50, "y":from.y+50},
+			calcMidpoint(from.x+50, from.y+50, to.x+50, to.y+50),
+			{"x":to.x+50,"y":to.y+50}];
+
+	var lineFunction = d3.svg.line()
+		.interpolate("basis")
+		.x(function(d) { return d.x; })
+		.y(function(d) { return d.y; });
+
+	var lineGraph = svg.append("path")
+		.attr("d", lineFunction(lineData))
+		.attr("opacity",0.8)
+		.attr("stroke", serviceRGB)
+		.attr("stroke-width", 2)
+		.attr("fill", "none");
+
+	// Let's make the circle follow the lineGraph path...
+	var dot = svg.append("circle")
+			.attr("r",6)
+			.attr("fill",serviceRGB)
+			.transition()
+			  .duration(2000)
+			  .ease("ease-in")
+			  .attrTween("transform", translateAlong(lineGraph.node()))
+			  .each("end", function() {
+			    d3.select(this)
+                            .transition().duration(1200).attr("r",50)
+			    .style("opacity",0).remove(); } );
+
+
+	var length = lineGraph.node().getTotalLength();
+	lineGraph.attr("stroke-dasharray", length + " " + length)
+		.attr("stroke-dashoffset", length)
+		.transition()
+			.duration(2000)
+			.ease("ease-in")
+			.attr("stroke-dashoffset",0)
+			.each("end", function() {
+			  d3.select(this).
+			  transition().duration(30000).style("opacity",0).remove();
+			});
+}
+
+function handleTable(msg) {
+	var table = svg.selectAll("tables");
+	tableData = [msg];
+	console.log("Created table");
+	var g = table.data(tableData).enter().append("g")
+	rect = g.append("rect")
+			.attr("x", msg.x)
+			.attr("y", msg.y)
+			.attr("height", 100)
+			.attr("width", 100)
+			.attr("class", "teamTable")
+
+	g.append("foreignObject")
+			.attr("x", msg.x+1)
+			.attr("y", msg.y+1)
+			.attr("z", 100)
+			.attr("height", 98)
+			.attr("width", 98)
+			.append("xhtml:span")
+			.html(msg.shorthand);
+
+}
+
+function handleRefresh(msg) {
+	window.location.reload(true);
+}
+
+function handleFail(msg) {
+	var g = lookupTeamGOT(msg.team);
+	//g[0].style="fill:#ff1133";
+}
+
+function handlePass(msg) {
+	var g = lookupTeamGOT(msg.team);
+	//g[0].style="fill:#44ff44";
+}
+
+webSock.onmessage = function (e) {
+	console.log("Got a websocket message...");
+	var msg = JSON.parse(e.data);
+	console.log("type: "+msg.type)
+	switch(msg.type) {
+		case "table":
+			handleTable(msg);
+			break;
+		case "pwn":
+			handlePwn(msg);
+			break;
+		case "refresh":
+			handleRefresh(msg);
+			break;
+		case "fail":
+			handleFail(msg);
+			break;
+		case "pass":
+			handlePass(msg);
+			break;
+		default:
+			console.log("unsupported type");
+			break;
+	}
+};
+$(function() {
+	{{ import json }}
+	{{ for team in teamlist: }}
+	handleTable(JSON.parse('{{=XML(json.dumps(team))}}'));
+	{{ pass }}
+});
+</script>
+

@@ -1,0 +1,114 @@
+{{extend 'layout_score.html'}}
+
+<style>
+h3
+{
+	text-align: center;
+	font-size: 24.5px;
+	line-height: 40px;
+	font-weight: bold;
+	margin: 10px 0;
+}
+.divider
+{
+	border-bottom: 1px gray solid;
+}
+.registrar
+{
+	width: 36em;
+	padding: 0 1em;
+	margin-left: auto;
+	margin-right: auto;
+	background-color: lightgray;
+	border: 1px black solid;
+}
+input[type='text'].name
+{
+	width: 147px;
+}
+label
+{
+	font-weight: bold;
+	white-space: nowrap;
+}
+td label
+{
+	padding-top: 5px;
+}
+span label
+{
+	margin: 0;
+	padding-bottom: 0;
+	font-weight: normal;
+	display: inline-block;
+}
+input[type="checkbox"]
+{
+	margin: 0;
+}
+.btn-lg
+{
+	font-size: large;
+}
+tr
+{
+	margin-bottom: 9px;
+}
+td, th
+{
+	vertical-align: top;
+	padding: 2px 5px;
+	text-align: left;
+}
+input:not(.btn)
+{
+	width: 330px;
+	height: 30px;
+	margin: 0 5px 0 0;
+	background-color: #fff;
+	border: 1px solid #ccc;
+	box-shadow: 0 1px 1px rgba(0, 0, 0, 0.075) inset;
+	transition: border 0.2s linear 0s, box-shadow 0.2s linear 0s;
+	border-radius: 4px;
+	padding: 2px 4px;
+}
+form textarea
+{
+	width: 330px;
+}
+input[type="checkbox"]
+{
+	width: auto;
+}
+form :checked ~ .toggled {
+	display:none;
+}
+input[type="radio"]
+{
+	width: 0;
+	margin: 2px;
+}
+span label
+{
+	vertical-align: top;
+	margin-right: 6px;
+}
+form span.radio_toggle input,
+form span.radio_toggle textarea
+{
+	display:none;
+}
+form :checked + span.radio_toggle input,
+form :checked + span.radio_toggle textarea
+{
+	display:block;
+}
+</style>
+<div style="height: 50em; margin: 10em 0 0 0">
+	<div class="registrar">
+		<div class="registration">
+			<h3 class="divider">Samurai Scrimmage</h3>
+			<div class="regform">{{=form}}</div>
+		</div>
+	</div>
+</div>

@@ -1,0 +1,25 @@
+{{extend 'layout_score.html'}}
+
+<div class="grid">
+	{{=H3(team.name)}}
+	{{=form}}
+</div>
+
+{{if users:}}
+<div class="grid">
+	<h3>Users</h3>
+	<table>
+		{{for user in users:}}
+		{{=TR(user.email)}}
+		{{pass}}
+	</table>
+</div>
+{{pass}}
+
+{{for gr in round_data:}}
+{{game_round,round_form = gr}}
+<div class="grid">
+	<h3>{{=game_round}}</h3>
+	{{=round_form}}
+</div>
+{{pass}}
